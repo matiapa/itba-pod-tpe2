@@ -12,3 +12,6 @@ buildNumber.properties
 *.iml
 .idea/
 scripts/
+
+*.csv
+*.txt

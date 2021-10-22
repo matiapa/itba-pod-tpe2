@@ -1,4 +1,4 @@
-package pod;
+package pod.models;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
@@ -8,7 +8,9 @@ import java.io.IOException;
 
 public class Tree implements DataSerializable {
 
-    String name, neighbour, street;
+    private String name, neighbour, street;
+
+    public Tree() {}
 
     public Tree(String name, String neighbour, String street) {
         this.name = name;
@@ -30,4 +32,16 @@ public class Tree implements DataSerializable {
         street = in.readUTF();
     }
 
+
+    public String getName() {
+        return name;
+    }
+
+    public String getNeighbour() {
+        return neighbour;
+    }
+
+    public String getStreet() {
+        return street;
+    }
 }

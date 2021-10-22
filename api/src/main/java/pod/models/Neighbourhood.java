@@ -1,4 +1,4 @@
-package pod;
+package pod.models;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
@@ -8,8 +8,8 @@ import java.io.IOException;
 
 public class Neighbourhood implements DataSerializable {
 
-    String name;
-    int population;
+    private String name;
+    private int population;
 
     public Neighbourhood(String name, int population) {
         this.name = name;
@@ -28,4 +28,12 @@ public class Neighbourhood implements DataSerializable {
         population = in.readInt();
     }
 
+
+    public String getName() {
+        return name;
+    }
+
+    public int getPopulation() {
+        return population;
+    }
 }
