@@ -14,6 +14,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="tpe2-g2-api" />
     <orderEntry type="library" name="Maven: com.hazelcast:hazelcast-all:3.7.8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.hazelcast:hazelcast:tests:3.7.8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.hazelcast:hazelcast-client:tests:3.7.8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.hazelcast:hazelcast:3.7.8" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.12" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.slf4j:slf4j-log4j12:1.7.12" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: log4j:log4j:1.2.17" level="project" />
