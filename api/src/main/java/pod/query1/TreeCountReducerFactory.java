@@ -20,7 +20,6 @@ public class TreeCountReducerFactory implements ReducerFactory<String, Long, Lon
 
         @Override
         public void reduce(Long value) {
-            System.out.println(value);
             sum += value;
         }
 

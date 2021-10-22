@@ -44,4 +44,5 @@ public class Tree implements DataSerializable {
     public String getStreet() {
         return street;
     }
+
 }

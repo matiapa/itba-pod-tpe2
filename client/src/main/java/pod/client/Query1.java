@@ -7,21 +7,21 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
+import com.hazelcast.map.impl.MapEntries;
+import com.hazelcast.map.impl.MapEntrySimple;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.models.Tree;
+import pod.query1.TreeCountCombinerFactory;
 import pod.query1.TreeCountMapper;
 import pod.query1.TreeCountReducerFactory;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -50,6 +50,7 @@ public class Query1 {
         Job<String, Tree> job = jt.newJob(dataSource);
         ICompletableFuture<Map<String, Long>> future = job
             .mapper( new TreeCountMapper() )
+            .combiner( new TreeCountCombinerFactory() )
             .reducer( new TreeCountReducerFactory() )
             .submit();
         Map<String, Long> result = future.get();
@@ -64,8 +65,9 @@ public class Query1 {
         FileWriter csvWriter = new FileWriter(csvFile);
 
         csvWriter.write("NEIGHBOURHOOD;TREES\n");
+
         result.entrySet().stream().sorted(
-            Map.Entry.comparingByValue()
+            Map.Entry.<String, Long>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
         ).forEach(e -> {
             try {
                 csvWriter.write(e.getKey() + ";" + e.getValue() + "\n");
@@ -74,8 +76,6 @@ public class Query1 {
             }
         });
         csvWriter.close();
-
-        System.out.println(result);
     }
 
 }

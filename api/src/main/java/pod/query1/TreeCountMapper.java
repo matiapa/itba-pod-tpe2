@@ -1,5 +1,7 @@
 package pod.query1;
 
+import com.hazelcast.mapreduce.Combiner;
+import com.hazelcast.mapreduce.CombinerFactory;
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 import pod.models.Tree;
