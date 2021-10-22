@@ -1,11 +1,12 @@
-package pod.query1;
+package pod.combiners;
 
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
 
-public class TreeCountCombinerFactory implements CombinerFactory<String, Long, Long> {
+public class CountCombinerFactory<K> implements CombinerFactory<K, Long, Long> {
+
     @Override
-    public Combiner<Long, Long> newCombiner(String key ) {
+    public Combiner<Long, Long> newCombiner(K key ) {
         return new TreeCountCombiner();
     }
 
@@ -13,7 +14,7 @@ public class TreeCountCombinerFactory implements CombinerFactory<String, Long, L
         private long sum = 0;
 
         @Override
-        public void combine( Long value ) {
+        public void combine(Long value) {
             sum++;
         }
 
@@ -27,4 +28,5 @@ public class TreeCountCombinerFactory implements CombinerFactory<String, Long, L
             sum = 0;
         }
     }
+
 }

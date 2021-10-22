@@ -1,4 +1,4 @@
-package pod.query1;
+package pod.mappers;
 
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
@@ -8,7 +8,7 @@ import pod.models.Tree;
 
 import java.util.List;
 
-public class TreeCountMapper implements Mapper<String, Tree, String, Long> {
+public class TreeByNeighMapper implements Mapper<String, Tree, String, Long> {
 
     private static final Long ONE = 1L;
 

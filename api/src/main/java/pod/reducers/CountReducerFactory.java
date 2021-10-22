@@ -1,12 +1,12 @@
-package pod.query1;
+package pod.reducers;
 
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class TreeCountReducerFactory implements ReducerFactory<String, Long, Long> {
+public class CountReducerFactory<K> implements ReducerFactory<K, Long, Long> {
 
     @Override
-    public Reducer<Long, Long> newReducer(String key) {
+    public Reducer<Long, Long> newReducer(K key) {
         return new TreeCountReducer();
     }
 

@@ -1,29 +1,21 @@
 package pod.client;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
-import com.hazelcast.core.IMap;
-import com.hazelcast.map.impl.MapEntries;
-import com.hazelcast.map.impl.MapEntrySimple;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.models.Tree;
-import pod.query1.TreeCountCombinerFactory;
-import pod.query1.TreeCountMapper;
-import pod.query1.TreeCountReducerFactory;
+import pod.combiners.CountCombinerFactory;
+import pod.mappers.TreeByNeighMapper;
+import pod.reducers.CountReducerFactory;
 
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 public class Query1 {
 
@@ -49,9 +41,9 @@ public class Query1 {
         JobTracker jt = hz.getJobTracker("g2_jobs");
         Job<String, Tree> job = jt.newJob(dataSource);
         ICompletableFuture<Map<String, Long>> future = job
-            .mapper( new TreeCountMapper() )
-            .combiner( new TreeCountCombinerFactory() )
-            .reducer( new TreeCountReducerFactory() )
+            .mapper( new TreeByNeighMapper() )
+            .combiner( new CountCombinerFactory<>() )
+            .reducer( new CountReducerFactory<>() )
             .submit();
         Map<String, Long> result = future.get();
 
