@@ -98,16 +98,19 @@ public abstract class Utils {
         String dir = parseParameter(args, "-DinPath");
 
         Path path;
-        if(city.equals("BUE"))
+        if(city.equals("BUE")) {
             path = Paths.get(dir + "/" + ARG_TREES_FILE_NAME);
-        else if(city.equals("VAN"))
+        } else if(city.equals("VAN")) {
             path = Paths.get(dir + "/" + CAN_TREES_FILE_NAME);
-        else
+        } else
             throw new IllegalArgumentException("<city> param must be 'BUE' or 'VAN'");
 
+        // Limpiamos la lista distribuida por si alguien ejecutó otra query antes con otro predicado
         IList<Tree> trees = hz.getList("g2_trees");
-        IMap<String, Neighbourhood> neighbourhoods = hz.getMap("g2_neighbourhoods");
+        trees.clear();
 
+        // Cargamos la lista de barrios para filtrar los árboles que se cargan
+        IMap<String, Neighbourhood> neighbourhoods = hz.getMap("g2_neighbourhoods");
         loadNeighbourhoodsFromCsv(city, dir, neighbourhoods);
 
         int treesLoaded = 0;
@@ -126,10 +129,10 @@ public abstract class Utils {
                 }
 
                 if(neighbourhoods.containsKey(tree.getNeighbour())){
-//                    if(treePredicate != null && treePredicate.test(tree)) {
+                    if(treePredicate != null && treePredicate.test(tree)) {
                         trees.add(tree);
                         treesLoaded++;
-//                    }
+                    }
                 }
             }
 

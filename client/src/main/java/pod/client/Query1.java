@@ -17,6 +17,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static pod.client.Utils.parseParameter;
+
 public class Query1 {
 
     private static final Logger logger = LoggerFactory.getLogger(Query1.class);
@@ -24,7 +26,7 @@ public class Query1 {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         // Setup logging
 
-        File logFile = new File("time1.txt");
+        File logFile = new File(parseParameter(args, "-DoutPath")+"/time1.txt");
         logFile.createNewFile();
         FileWriter logWriter = new FileWriter(logFile);
 
@@ -52,7 +54,7 @@ public class Query1 {
 
         // Write results
 
-        File csvFile = new File("query1.txt");
+        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query1.txt");
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 
