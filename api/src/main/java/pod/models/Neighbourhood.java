@@ -6,10 +6,12 @@ import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
 
-public class Neighbourhood implements DataSerializable {
+public class Neighbourhood implements DataSerializable, Comparable<Neighbourhood> {
 
     private String name;
     private int population;
+
+    public Neighbourhood(){}
 
     public Neighbourhood(String name, int population) {
         this.name = name;
@@ -35,5 +37,10 @@ public class Neighbourhood implements DataSerializable {
 
     public int getPopulation() {
         return population;
+    }
+
+    @Override
+    public int compareTo(Neighbourhood o) {
+        return name.compareTo(o.name);
     }
 }

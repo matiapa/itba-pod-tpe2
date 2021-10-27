@@ -6,6 +6,7 @@ import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
+import com.hazelcast.core.IMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.models.Neighbourhood;
@@ -16,9 +17,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class Utils {
+
+
+    private static final String ARG_TREES_FILE_NAME = "arbolesBue.csv";
+    private static final String ARG_NEIGHBOURHOODS_FILE_NAME = "barriosBue.csv";
+    private static final String CAN_TREES_FILE_NAME = "arbolesVan.csv";
+    private static final String CAN_NEIGHBOURHOODS_FILE_NAME = "barriosVan.csv";
 
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
@@ -55,9 +63,20 @@ public abstract class Utils {
         logTimestamp(timestampWriter, "Inicio de la lectura del archivo");
 
         String city = parseParameter(args, "-Dcity");
-        Path path = Paths.get(parseParameter(args, "-DinPath"));
+        String dir = parseParameter(args, "-DinPath");
+
+        Path path;
+        if(city.equals("BUE"))
+            path = Paths.get(dir + "/" + ARG_TREES_FILE_NAME);
+        else if(city.equals("VAN"))
+            path = Paths.get(dir + "/" + CAN_TREES_FILE_NAME);
+        else
+            throw new IllegalArgumentException("<city> param must be 'BUE' or 'VAN'");
+
+
 
         IList<Tree> trees = hz.getList("g2_trees");
+        IList<Neighbourhood> neighbourhoods = hz.getList("g2_neighbourhoods");
 
         int treesLoaded = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(path.toFile()))) {
@@ -67,14 +86,18 @@ public abstract class Utils {
             if(city.equals("BUE")) {
                 while ((line = br.readLine()) != null) {
                     String[] values = line.split("[;]");
-                    trees.add(new Tree(values[7], values[2], values[4]));
-                    treesLoaded++;
+                    if(neighbourhoods.stream().anyMatch(n->n.getName().equals(values[2]))){
+                        trees.add(new Tree(values[7], values[2], values[4]));
+                        treesLoaded++;
+                    }
                 }
-            } else if(city.equals("VAN")) {
+            } else {
                 while ((line = br.readLine()) != null) {
                     String[] values = line.split("[;]");
-                    trees.add(new Tree(values[6], values[12], values[2]));
-                    treesLoaded++;
+                    if(neighbourhoods.stream().anyMatch(n->n.getName().equals(values[12]))) {
+                        trees.add(new Tree(values[6], values[12], values[2]));
+                        treesLoaded++;
+                    }
                 }
             }
 
@@ -90,7 +113,16 @@ public abstract class Utils {
         logTimestamp(timestampWriter, "Inicio de la lectura del archivo");
 
         String city = parseParameter(args, "-Dcity");
-        Path path = Paths.get(parseParameter(args, "-DinPath"));
+
+        String dir = (parseParameter(args, "-DinPath"));
+
+        Path path;
+        if(city.equals("BUE"))
+            path = Paths.get(dir + "/" + ARG_NEIGHBOURHOODS_FILE_NAME);
+        else if(city.equals("VAN"))
+            path = Paths.get(dir + "/" + CAN_NEIGHBOURHOODS_FILE_NAME);
+        else
+            throw new IllegalArgumentException("<city> param must be 'BUE' or 'VAN'");
 
         IList<Neighbourhood> neighbourhoods = hz.getList("g2_neighbourhoods");
 
@@ -99,19 +131,12 @@ public abstract class Utils {
             br.readLine();
 
             String line;
-            if(city.equals("BUE")) {
-                while ((line = br.readLine()) != null) {
-                    String[] values = line.split("[;]");
-                    neighbourhoods.add(new Neighbourhood(values[0], Integer.parseInt(values[1])));
-                    neighbourhoodsLoaded++;
-                }
-            } else if(city.equals("VAN")) {
-                while ((line = br.readLine()) != null) {
-                    String[] values = line.split("[;]");
-                    neighbourhoods.add(new Neighbourhood(values[0], Integer.parseInt(values[1])));
-                    neighbourhoodsLoaded++;
-                }
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split("[;]");
+                neighbourhoods.add(new Neighbourhood(values[0], Integer.parseInt(values[1])));
+                neighbourhoodsLoaded++;
             }
+
 
             logger.info("{} neighbourhoods added", neighbourhoodsLoaded);
         } catch (IOException e) {
