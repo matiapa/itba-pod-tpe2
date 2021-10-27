@@ -7,12 +7,17 @@ import com.hazelcast.core.IList;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pod.collators.SetSizeCollator;
+import pod.combiners.CountCombinerFactory;
+import pod.combiners.SetCombinerFactory;
+import pod.combiners.SortedSetCombinerFactory;
+import pod.mappers.NeighborhoodSpeciesMapper;
 import pod.models.Neighbourhood;
 import pod.models.Tree;
-import pod.mappers.NeighbourhoodSpeciesMapper;
-import pod.reducers.CountReducerFactory;
+import pod.reducers.SetReducerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,15 +36,13 @@ public class Query3 {
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
 
 
-
-
         String serverAddress = parseParameter(args,"-Daddresses");
         String serverPort = serverAddress.substring(serverAddress.indexOf(':')+1);
         serverAddress= serverAddress.substring(0,serverAddress.indexOf(':'));
         String outPath = parseParameter(args,"-DoutPath");
 
 
-        File logFile = new File(outPath+"/time3.txt");
+        File logFile = new File(outPath+"/time3_b.txt");
         System.out.println(logFile.createNewFile());
         FileWriter logWriter = new FileWriter(logFile);
 
@@ -64,11 +67,15 @@ public class Query3 {
         Job<String,Tree> job = jt.newJob(ds);
 
 
-       ICompletableFuture<Map<String,Long>> futureResult = job.mapper(new NeighbourhoodSpeciesMapper())
-                .reducer(new CountReducerFactory<>())
-                .submit();
+       ICompletableFuture<Map<String,Integer>>  futureResult = job
+               .mapper(new NeighborhoodSpeciesMapper())
+               .combiner(new SetCombinerFactory<>())
+               .reducer(new SetReducerFactory<>())
 
-        Map<String,Long> result = futureResult.get();
+
+               .submit(new SetSizeCollator());
+
+        Map<String,Integer> result = futureResult.get();
 
 
 
@@ -89,18 +96,15 @@ public class Query3 {
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce para query 3");
 
         logWriter.close();
-
-
         // Write results
 
-        File csvFile = new File(outPath+"/query3_results.txt");
-        boolean rr= csvFile.createNewFile();
+        File csvFile = new File(outPath+"/query3_results_b.txt");
         FileWriter csvWriter = new FileWriter(csvFile);
 
         csvWriter.write("NEIGHBOURHOOD;COMMON_NAME_COUNT\n");
 
         result.entrySet().stream().sorted(
-                Map.Entry.<String, Long>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
+                Map.Entry.<String, Integer>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
         ).forEach(r -> {
             if(n.getAndDecrement() >0) {
                 try {
