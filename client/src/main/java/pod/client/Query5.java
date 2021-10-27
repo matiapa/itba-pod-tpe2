@@ -30,7 +30,8 @@ public class Query5 {
 
     private static final Logger logger = LoggerFactory.getLogger(Query5.class);
 
-//    -Dcity=VAN -Daddresses=127.0.0.1 -DinPath=. -DoutPath=. -Dneighbourhood=KITSILANO -DcommonName=NORWAY_MAPLE
+    // -Dcity=BUE -Daddresses=127.0.0.1 -DinPath=. -DoutPath=. -Dneighbourhood=7 -DcommonName="Fraxinus pennsylvanica"
+    // -Dcity=VAN -Daddresses=127.0.0.1 -DinPath=. -DoutPath=. -Dneighbourhood=KITSILANO -DcommonName=NORWAY_MAPLE
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         // Setup logging and client
@@ -42,11 +43,8 @@ public class Query5 {
         HazelcastInstance hz = Utils.getClientInstance(args);
         JobTracker jt = hz.getJobTracker("g2_jobs");
 
-        String neighbourhood = parseParameter(args, "-Dneighbourhood");
-        String commonName = parseParameter(args, "-DcommonName");
-
-        System.out.println(neighbourhood);
-        System.out.println(commonName);
+        String neighbourhood = parseParameter(args, "-Dneighbourhood").replace("_"," ");
+        String commonName = parseParameter(args, "-DcommonName").replace("_"," ");
 
         Utils.loadTreesFromCsv(args, hz, logWriter, (t -> t.getNeighbour().equals(neighbourhood)
                 && t.getName().equals(commonName)));
