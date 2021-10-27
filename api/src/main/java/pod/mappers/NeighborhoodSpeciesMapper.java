@@ -12,9 +12,6 @@ public class NeighborhoodSpeciesMapper implements Mapper<String, Tree, String,St
     }
 
 
-//    @Override
-//    public void map(Integer integer, TreeEntry treeEntry, Context<String, Integer> context) {
-//        context.emit(treeEntry.getNeighborhood()+";"+treeEntry.getSpecies(),0);
-//    }
+
 
 }
