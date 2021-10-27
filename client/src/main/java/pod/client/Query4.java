@@ -1,6 +1,7 @@
 package pod.client;
 
 
+import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -10,26 +11,23 @@ import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pod.collators.NeighborhoodSpeciesCollator;
 import pod.collators.SetSizeCollator;
 import pod.combiners.SetCombinerFactory;
 import pod.combiners.SortedSetCombinerFactory;
 import pod.mappers.NeighborhoodBySpeciesCountMapper;
 import pod.mappers.NeighborhoodSpeciesMapper;
-import pod.mappers.StreetByTreeCountMapper;
-import pod.models.NeighborPairs;
 import pod.models.Tree;
-import pod.reducers.NeighborhoodSpeciesReducerFactory;
 import pod.reducers.SetReducerFactory;
 import pod.reducers.SortedSetReducerFactory;
 
-import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.Condition;
-import java.util.stream.Collectors;
 
 import static pod.client.Utils.parseParameter;
 
@@ -47,9 +45,7 @@ public class Query4 {
         // Create and execute job
 
         HazelcastInstance hz = Utils.getClientInstance(args);
-//        System.out.println("start csv");
         Utils.loadTreesFromCsv(args, hz, logWriter);
-//        System.out.println("finish csv");
 
         final IList<Tree> trees = hz.getList("g2_trees");
         final KeyValueSource<String, Tree> dataSource = KeyValueSource.fromList(trees);
@@ -63,7 +59,6 @@ public class Query4 {
                 .mapper( new NeighborhoodSpeciesMapper())
                 .combiner(new SetCombinerFactory<>())
                 .reducer( new SetReducerFactory<>())
-//                .submit(new NeighborhoodSpeciesCollator());
                 .submit(new SetSizeCollator());
         Map<String,Integer> result = future.get();
 
@@ -86,7 +81,6 @@ public class Query4 {
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
         logWriter.close();
-//        System.out.println("finished map reduce");
 
         // Write results
 
@@ -122,6 +116,7 @@ public class Query4 {
 
 
         csvWriter.close();
+        HazelcastClient.shutdownAll();
 
 
 

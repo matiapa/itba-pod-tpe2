@@ -1,5 +1,6 @@
 package pod.client;
 
+import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -108,6 +109,8 @@ public class Query5 {
             });
         });
         csvWriter.close();
+        HazelcastClient.shutdownAll();
+
     }
 
 }
