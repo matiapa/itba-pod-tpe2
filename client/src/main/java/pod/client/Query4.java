@@ -24,8 +24,12 @@ import pod.reducers.SetReducerFactory;
 import pod.reducers.SortedSetReducerFactory;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Condition;
+import java.util.stream.Collectors;
 
 import static pod.client.Utils.parseParameter;
 
@@ -91,6 +95,13 @@ public class Query4 {
         FileWriter csvWriter = new FileWriter(csvFile);
 
         csvWriter.write("GROUP;NEIGHBOURHOOD A;NEIGHBOURHOOD B\n");
+        if (parseParameter(args, "-Dcity").equals("BUE")){
+            for (Long key:result2.keySet()) {
+                SortedSet<String> aux=new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
+                aux.addAll(result2.get(key));
+                result2.put(key,aux);
+            }
+        }
 
         result2.entrySet().stream().sorted(
                 Map.Entry.<Long, SortedSet<String>>comparingByKey().thenComparing(e -> e.getValue().first()).reversed()
@@ -108,6 +119,8 @@ public class Query4 {
                 });
             });
         });
+
+
         csvWriter.close();
 
 

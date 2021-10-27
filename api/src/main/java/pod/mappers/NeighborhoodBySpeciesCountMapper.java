@@ -8,7 +8,8 @@ public class NeighborhoodBySpeciesCountMapper implements Mapper<String, Integer,
 
     @Override
     public void map(String neighborhood, Integer speciesCount, Context<Long, String> context) {
-        context.emit((long)speciesCount/100*100,neighborhood);
+        if (speciesCount>99)
+            context.emit((long)speciesCount/100*100,neighborhood);
     }
 
 }
