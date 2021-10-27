@@ -16,10 +16,11 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.List;
 
 public abstract class Utils {
 
@@ -35,6 +36,7 @@ public abstract class Utils {
     public static void logTimestamp(FileWriter fileWriter, String message) throws IOException {
         String timestamp = (new SimpleDateFormat("dd/MM/yyyy hh:mm:ss:SSSS")).format(new Date());
         fileWriter.write(timestamp + " - " + message + "\n");
+        System.out.println(timestamp + " - " + message);
     }
 
 
@@ -105,13 +107,14 @@ public abstract class Utils {
         } else
             throw new IllegalArgumentException("<city> param must be 'BUE' or 'VAN'");
 
-        // Limpiamos la lista distribuida por si alguien ejecutó otra query antes con otro predicado
-        IList<Tree> trees = hz.getList("g2_trees");
-        trees.clear();
-
         // Cargamos la lista de barrios para filtrar los árboles que se cargan
+
         IMap<String, Neighbourhood> neighbourhoods = hz.getMap("g2_neighbourhoods");
         loadNeighbourhoodsFromCsv(city, dir, neighbourhoods);
+
+        // Recorremos el CSV y cargamos los arboles a una lista local
+
+        List<Tree> trees = new ArrayList<>();
 
         int treesLoaded = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(path.toFile()))) {
@@ -129,7 +132,7 @@ public abstract class Utils {
                 }
 
                 if(neighbourhoods.containsKey(tree.getNeighbour())){
-                    if(treePredicate != null && treePredicate.test(tree)) {
+                    if(treePredicate == null || treePredicate.test(tree)) {
                         trees.add(tree);
                         treesLoaded++;
                     }
@@ -140,6 +143,13 @@ public abstract class Utils {
         } catch (IOException e) {
             logger.error("Error Opening CSV File");
         }
+
+        // Limpiamos la lista distribuida por si alguien ejecutó otra query antes con otro predicado y cargamos
+        // los elementos de la lista local todos juntos
+
+        IList<Tree> treesDist = hz.getList("g2_trees");
+        treesDist.clear();
+        treesDist.addAll(trees);
 
         logTimestamp(timestampWriter, "Fin de la lectura del archivo");
     }
