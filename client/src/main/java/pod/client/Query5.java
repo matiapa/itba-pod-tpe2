@@ -23,7 +23,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
-import java.util.List;
+
+import static pod.client.Utils.parseParameter;
 
 public class Query5 {
 
@@ -32,16 +33,24 @@ public class Query5 {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         // Setup logging and client
 
-        File logFile = new File("time5.txt");
+        File logFile = new File(parseParameter(args, "-DoutPath")+"time5.txt");
         logFile.createNewFile();
         FileWriter logWriter = new FileWriter(logFile);
 
         HazelcastInstance hz = Utils.getClientInstance(args);
         JobTracker jt = hz.getJobTracker("g2_jobs");
 
-        Utils.loadTreesFromCsv(args, hz, logWriter);
+        String neighbourhood = parseParameter(args, "-Dneighbourhood");
+        String commonName = parseParameter(args, "-DcommonName");
 
-        // Create and execute first job
+        System.out.println(neighbourhood);
+        System.out.println(commonName);
+
+        Utils.loadTreesFromCsv(args, hz, logWriter, (t -> t.getNeighbour().equals(neighbourhood)
+                && t.getName().equals(commonName)));
+
+        // Transform tree list to Map: Street -> Amount of trees
+        // Transform tree list to Map: Neigh -> Amount of species
 
         final IList<Tree> trees = hz.getList("g2_trees");
         KeyValueSource<String, Tree> dataSource = KeyValueSource.fromList(trees);
@@ -58,7 +67,8 @@ public class Query5 {
 
         // System.out.println(result);
 
-        // Create and execute second job
+        // Transform previous map to Map: Amount of trees -> SortedSet<Street>
+        // Transform previous map to Map: Amount of species -> SortedSet<Neigh>
 
         final IMap<String, Long> treeCountByStreet = hz.getMap("g2_treeCountByStreet");
         result.forEach(treeCountByStreet::put);
@@ -79,7 +89,7 @@ public class Query5 {
 
         // Write results
 
-        File csvFile = new File("query5.txt");
+        File csvFile = new File(parseParameter(args, "-DoutPath")+"query5.txt");
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 

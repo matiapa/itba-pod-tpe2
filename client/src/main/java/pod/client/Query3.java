@@ -46,8 +46,6 @@ public class Query3 {
 
         HazelcastInstance hazelcastInstance = Utils.getClientInstance(args);
 
-        Utils.loadNeighbourhoodsFromCsv(args,hazelcastInstance,logWriter);
-        final IList<Neighbourhood> neighbourhoods = hazelcastInstance.getList("g2_neighbourhoods");
         Utils.loadTreesFromCsv(args,hazelcastInstance,logWriter);
 
 
