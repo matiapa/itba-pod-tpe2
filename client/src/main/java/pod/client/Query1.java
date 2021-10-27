@@ -8,13 +8,15 @@ import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pod.models.Tree;
 import pod.combiners.CountCombinerFactory;
 import pod.mappers.TreeByNeighMapper;
+import pod.models.Tree;
 import pod.reducers.CountReducerFactory;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static pod.client.Utils.parseParameter;
