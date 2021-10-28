@@ -75,7 +75,7 @@ public class Query3 {
         logWriter.close();
         // Write results
 
-        File csvFile = new File(outPath+"/query3.txt");
+        File csvFile = new File(outPath+"/query3.csv");
         FileWriter csvWriter = new FileWriter(csvFile);
 
         csvWriter.write("NEIGHBOURHOOD;COMMON_NAME_COUNT\n");

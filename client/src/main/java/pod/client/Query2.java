@@ -55,7 +55,7 @@ public class Query2 {
 
         // Write results
 
-        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query2.txt");
+        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query2.csv");
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 
