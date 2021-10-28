@@ -9,7 +9,6 @@ import pod.models.Pair;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class CalculateIndexCollator implements Collator<Map.Entry<String, Pair<String, Integer>>, Map<String, Pair<String, Float>>> {
     HazelcastInstance hz;
