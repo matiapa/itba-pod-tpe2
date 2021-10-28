@@ -11,12 +11,14 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.collators.StreetPairsCollator;
+
+import pod.models.StreetPair;
+import pod.models.Tree;
 import pod.combiners.CountCombinerFactory;
 import pod.combiners.SetCombinerFactory;
 import pod.mappers.StreetByTreeCountMapper;
 import pod.mappers.TreeByStreetMapper;
-import pod.models.StreetPair;
-import pod.models.Tree;
+
 import pod.reducers.CountReducerFactory;
 import pod.reducers.SetReducerFactory;
 

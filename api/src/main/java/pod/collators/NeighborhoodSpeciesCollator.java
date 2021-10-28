@@ -30,7 +30,7 @@ public class NeighborhoodSpeciesCollator implements Collator<Map.Entry<String,In
                 List<String>list=preresult.get(key);
 
                 for (int i = 1; i < list.size() ; i++) {
-                    result.add(new NeighborPairs(key, list.get(0),list.get(i) ));
+                    result.add(new NeighborPairs((long)key, list.get(0),list.get(i) ));
                 }
 
             }
