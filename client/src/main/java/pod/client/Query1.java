@@ -1,5 +1,6 @@
 package pod.client;
 
+import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -68,10 +69,13 @@ public class Query1 {
             try {
                 csvWriter.write(e.getKey() + ";" + e.getValue() + "\n");
             } catch (IOException err) {
-                err.printStackTrace();
+                logger.error(err.getMessage());
+                HazelcastClient.shutdownAll();
             }
         });
         csvWriter.close();
+        HazelcastClient.shutdownAll();
+
     }
 
 }

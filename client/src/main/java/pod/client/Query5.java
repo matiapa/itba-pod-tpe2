@@ -101,7 +101,9 @@ public class Query5 {
             try {
                 csvWriter.write(pair.getGroup() + ";" + pair.getStreetA() + ";" + pair.getStreetB() + "\n");
             } catch (IOException err) {
-                err.printStackTrace();
+                logger.error(err.getMessage());
+                HazelcastClient.shutdownAll();
+
             }
         });
 

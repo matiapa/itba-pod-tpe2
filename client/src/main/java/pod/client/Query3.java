@@ -35,7 +35,7 @@ public class Query3 {
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
 
         String outPath = parseParameter(args,"-DoutPath");
-
+        String nParam = parseParameter(args,"-Dn");
 
         File logFile = new File(outPath+"/time3.txt");
         System.out.println(logFile.createNewFile());
@@ -48,8 +48,6 @@ public class Query3 {
 
 
 
-
-
         Utils.logTimestamp(logWriter, "Inicio del trabajo map/reduce");
 
         IList<Tree> trees = hazelcastInstance.getList("g2_trees");
@@ -59,7 +57,7 @@ public class Query3 {
 
         AtomicInteger n = new AtomicInteger();
         try {
-            n.set(Integer.parseInt(parseParameter(args, "-Dn")));
+            n.set(Integer.parseInt(nParam));
 
             if (n.get() < 0)
                 logger.error("<n> param must be an integer greater than zero");

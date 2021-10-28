@@ -81,7 +81,9 @@ public class Query4 {
             try {
                 csvWriter.write(neighborPairs.getGroup() + ";" + neighborPairs.getNeighborhoodA() + ";" + neighborPairs.getNeighborhoodB() + "\n");
             } catch (IOException err) {
-                err.printStackTrace();
+                logger.error(err.getMessage());
+                HazelcastClient.shutdownAll();
+
             }
         });
 
@@ -122,4 +124,3 @@ public class Query4 {
         return future2.get();
     }
 }
-
