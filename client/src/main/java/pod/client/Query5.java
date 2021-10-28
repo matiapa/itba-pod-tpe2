@@ -11,14 +11,14 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.collators.StreetPairsCollator;
-import pod.combiners.SortedSetCombinerFactory;
-import pod.models.StreetPair;
-import pod.models.Tree;
 import pod.combiners.CountCombinerFactory;
-import pod.reducers.CountReducerFactory;
+import pod.combiners.SetCombinerFactory;
 import pod.mappers.StreetByTreeCountMapper;
 import pod.mappers.TreeByStreetMapper;
-import pod.reducers.SortedSetReducerFactory;
+import pod.models.StreetPair;
+import pod.models.Tree;
+import pod.reducers.CountReducerFactory;
+import pod.reducers.SetReducerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -46,8 +46,8 @@ public class Query5 {
         HazelcastInstance hz = Utils.getClientInstance(args);
         JobTracker jt = hz.getJobTracker("g2_jobs");
 
-        String neighbourhood = parseParameter(args, "-Dneighbourhood").replace("_"," ");
-        String commonName = parseParameter(args, "-DcommonName").replace("_"," ");
+        String neighbourhood = parseParameter(args, "-Dneighbourhood");
+        String commonName = parseParameter(args, "-DcommonName");
 
         Utils.loadTreesFromCsv(args, hz, logWriter, (t -> t.getNeighbour().equals(neighbourhood)
                 && t.getName().equals(commonName)));
@@ -78,8 +78,8 @@ public class Query5 {
         Job<String, Long> job2 = jt.newJob(dataSource2);
         ICompletableFuture<SortedSet<StreetPair>> future2 = job2
             .mapper( new StreetByTreeCountMapper() )
-            .combiner( new SortedSetCombinerFactory<>() )
-            .reducer( new SortedSetReducerFactory<>() )
+            .combiner( new SetCombinerFactory<>() )
+            .reducer( new SetReducerFactory<>() )
             .submit( new StreetPairsCollator() );
         SortedSet<StreetPair> result2 = future2.get();
 

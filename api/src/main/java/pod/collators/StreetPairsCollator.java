@@ -5,15 +5,15 @@ import pod.models.StreetPair;
 
 import java.util.*;
 
-public class StreetPairsCollator implements Collator<Map.Entry<Long, SortedSet<String>>, SortedSet<StreetPair>> {
+public class StreetPairsCollator implements Collator<Map.Entry<Long, Set<String>>, SortedSet<StreetPair>> {
 
     @Override
-    public SortedSet<StreetPair> collate(Iterable<Map.Entry<Long, SortedSet<String>>> values) {
+    public SortedSet<StreetPair> collate(Iterable<Map.Entry<Long, Set<String>>> values) {
         SortedSet<StreetPair> set = new TreeSet<>();
 
         values.forEach(e -> {
             long group = e.getKey();
-            SortedSet<String> streets = e.getValue();
+            Set<String> streets = e.getValue();
 
             streets.forEach(st1 -> {
                 streets.forEach(st2 -> {

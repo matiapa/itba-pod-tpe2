@@ -43,7 +43,7 @@ public abstract class Utils {
     public static String parseParameter(String[] args, String paramToFind){
         return Stream.of(args).filter(arg -> arg.contains(paramToFind))
             .map(arg ->
-                    arg.substring(arg.indexOf("=")+ 1))
+                    arg.substring(arg.indexOf("=")+ 1).replace("_"," ").replace("'", ""))
             .findFirst().orElseThrow(() -> new IllegalArgumentException(
                     "Must provide " + paramToFind + "=<value> param")
             );
