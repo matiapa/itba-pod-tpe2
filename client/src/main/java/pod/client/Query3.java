@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static pod.client.Utils.parseParameter;
 
@@ -45,32 +46,14 @@ public class Query3 {
 
 
 
-        final IList<Tree> trees = hazelcastInstance.getList("g2_trees");
-
-
-
-
-        final KeyValueSource<String,Tree> ds = KeyValueSource.fromList(trees);
 
 
         Utils.logTimestamp(logWriter, "Inicio del trabajo map/reduce");
 
-        JobTracker jt = hazelcastInstance.getJobTracker("g2_jobs");
-        Job<String,Tree> job = jt.newJob(ds);
+        IList<Tree> trees = hazelcastInstance.getList("g2_trees");
 
 
-       ICompletableFuture<Map<String,Integer>>  futureResult = job
-               .mapper(new NeighborhoodSpeciesMapper())
-               .combiner(new SetCombinerFactory<>())
-               .reducer(new SetReducerFactory<>())
-
-
-               .submit(new SetSizeCollator());
-
-        Map<String,Integer> result = futureResult.get();
-
-
-
+        Map<String,Integer> result = getMapReduceResult(hazelcastInstance,trees);
 
         AtomicInteger n = new AtomicInteger();
         try {
@@ -95,9 +78,9 @@ public class Query3 {
 
         csvWriter.write("NEIGHBOURHOOD;COMMON_NAME_COUNT\n");
 
-        result.entrySet().stream().sorted(
-                Map.Entry.<String, Integer>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
-        ).forEach(r -> {
+
+
+        getResultSorted(result).forEach(r -> {
             if(n.getAndDecrement() >0) {
                 try {
                     csvWriter.write(r.getKey() + ";" + r.getValue() + "\n");
@@ -121,6 +104,33 @@ public class Query3 {
 
     }
 
+    public static Stream<Map.Entry<String, Integer>> getResultSorted(Map<String, Integer> result) {
+
+        return result.entrySet().stream().sorted(
+                Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()));
+
+    }
+
+    public static Map<String, Integer> getMapReduceResult(HazelcastInstance hazelcastInstance, IList<Tree> trees) throws ExecutionException, InterruptedException {
+
+        final KeyValueSource<String,Tree> ds = KeyValueSource.fromList(trees);
+
+
+        JobTracker jt = hazelcastInstance.getJobTracker("g2_jobs");
+        Job<String,Tree> job = jt.newJob(ds);
+
+
+        ICompletableFuture<Map<String,Integer>>  futureResult = job
+                .mapper(new NeighborhoodSpeciesMapper())
+                .combiner(new SetCombinerFactory<>())
+                .reducer(new SetReducerFactory<>())
+
+
+                .submit(new SetSizeCollator());
+
+
+        return futureResult.get();
+    }
 
 
 }
