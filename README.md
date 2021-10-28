@@ -31,7 +31,7 @@ chmod 777 ./server.sh
 Luego encender el server ejecutando el bash disponible en la carpeta actual.
 
 ```bash
-./server.sh [PORT]
+./server.sh
 ```
 
 Para ejecutar los clientes de cada query debemos acceder al directorio generado al descomprimir su archivo al inicio. Deberemos también asignar los permisos correspondientes.
