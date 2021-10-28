@@ -12,12 +12,14 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.collators.SetSizeCollator;
+import pod.collators.SetSizeCollatorWithOrder;
 import pod.collators.SetSortCollator;
 import pod.combiners.SetCombinerFactory;
 import pod.combiners.SortedSetCombinerFactory;
 import pod.mappers.NeighborhoodBySpeciesCountMapper;
 import pod.mappers.NeighborhoodSpeciesMapper;
 import pod.models.NeighborPairs;
+import pod.models.Pair;
 import pod.models.Tree;
 import pod.reducers.SetReducerFactory;
 import pod.reducers.SortedSetReducerFactory;
@@ -27,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 
 import static pod.client.Utils.parseParameter;
@@ -44,40 +47,16 @@ public class Query4 {
 
         // Create and execute job
 
+
         HazelcastInstance hz = Utils.getClientInstance(args);
         Utils.loadTreesFromCsv(args, hz, logWriter);
-
-        final IList<Tree> trees = hz.getList("g2_trees");
-        final KeyValueSource<String, Tree> dataSource = KeyValueSource.fromList(trees);
 
         Utils.logTimestamp(logWriter, "Inicio del trabajo map/reduce");
 
 
-        JobTracker jt = hz.getJobTracker("g2_jobs");
-        Job<String, Tree> job = jt.newJob(dataSource);
-        ICompletableFuture<Map<String,Integer>> future = job
-                .mapper( new NeighborhoodSpeciesMapper())
-                .combiner(new SetCombinerFactory<>())
-                .reducer( new SetReducerFactory<>())
-                .submit(new SetSizeCollator());
-        Map<String,Integer> result = future.get();
+        final IList<Tree> trees = hz.getList("g2_trees");
 
-
-        // Transform previous map to Map: Amount of trees -> SortedSet<Street>
-
-        final IMap<String, Integer> treeSpeciesCountByNeighborhood = hz.getMap("g2_treeSpeciesCountByNeighborhood");
-        treeSpeciesCountByNeighborhood.clear();
-        treeSpeciesCountByNeighborhood.putAll(result);
-
-        KeyValueSource<String, Integer> dataSource2 = KeyValueSource.fromMap(treeSpeciesCountByNeighborhood);
-
-        Job<String, Integer> job2 = jt.newJob(dataSource2);
-        ICompletableFuture<List<NeighborPairs>> future2 = job2
-                .mapper( new NeighborhoodBySpeciesCountMapper() )
-                .combiner( new SortedSetCombinerFactory<>() )
-                .reducer( new SortedSetReducerFactory<>() )
-                .submit(new SetSortCollator());
-        List<NeighborPairs> result2 = future2.get();
+        List <NeighborPairs> result = getMapReduceResult(hz,trees);
 
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
@@ -85,7 +64,7 @@ public class Query4 {
 
         // Write results
 
-        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query4.csv");
+        File csvFile = new File(parseParameter(args, "-DoutPath") + "/query4.csv");
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 
@@ -98,7 +77,7 @@ public class Query4 {
 //            }
 //        }
 
-        result2.forEach(neighborPairs ->{
+        result.forEach(neighborPairs -> {
             try {
                 csvWriter.write(neighborPairs.getGroup() + ";" + neighborPairs.getNeighborhoodA() + ";" + neighborPairs.getNeighborhoodB() + "\n");
             } catch (IOException err) {
@@ -107,9 +86,40 @@ public class Query4 {
         });
 
 
-
         csvWriter.close();
         HazelcastClient.shutdownAll();
     }
 
+
+    public static List<NeighborPairs> getMapReduceResult(HazelcastInstance hz, IList<Tree> trees) throws ExecutionException, InterruptedException {
+
+        final KeyValueSource<String, Tree> dataSource = KeyValueSource.fromList(trees);
+
+
+        JobTracker jt = hz.getJobTracker("g2_jobs");
+        Job<String, Tree> job = jt.newJob(dataSource);
+        ICompletableFuture<Map<String,Integer>> future = job
+                .mapper( new NeighborhoodSpeciesMapper())
+                .combiner(new SetCombinerFactory<>())
+                .reducer( new SetReducerFactory<>())
+                .submit(new SetSizeCollator());
+        Map<String,Integer> result =future.get();
+
+        // Transform previous map to Map: Amount of trees -> SortedSet<Street>
+
+        final IMap<String, Integer> treeSpeciesCountByNeighborhood = hz.getMap("g2_treeSpeciesCountByNeighborhood");
+        treeSpeciesCountByNeighborhood.clear();
+        treeSpeciesCountByNeighborhood.putAll(result);
+
+        KeyValueSource<String, Integer> dataSource2 = KeyValueSource.fromMap(treeSpeciesCountByNeighborhood);
+
+        Job<String, Integer> job2 = jt.newJob(dataSource2);
+        ICompletableFuture<List<NeighborPairs>> future2 = job2
+                .mapper(new NeighborhoodBySpeciesCountMapper())
+                .combiner(new SortedSetCombinerFactory<>())
+                .reducer(new SortedSetReducerFactory<>())
+                .submit(new SetSortCollator());
+        return future2.get();
+    }
 }
+
