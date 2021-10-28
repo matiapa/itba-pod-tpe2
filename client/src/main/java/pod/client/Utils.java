@@ -13,14 +13,13 @@ import pod.models.Neighbourhood;
 import pod.models.Tree;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.List;
 
 public abstract class Utils {
 
@@ -66,7 +65,7 @@ public abstract class Utils {
     }
 
 
-    private static void loadNeighbourhoodsFromCsv(String city, String dir, IMap<String, Neighbourhood> neighbourhoods) throws IOException {
+    private static Map<String, Neighbourhood> loadNeighbourhoodsFromCsv(String city, String dir) throws IOException {
         Path path;
         if(city.equals("BUE"))
             path = Paths.get(dir + "/" + ARG_NEIGHBOURHOODS_FILE_NAME);
@@ -74,6 +73,8 @@ public abstract class Utils {
             path = Paths.get(dir + "/" + CAN_NEIGHBOURHOODS_FILE_NAME);
         else
             throw new IllegalArgumentException("<city> param must be 'BUE' or 'VAN'");
+
+        Map<String, Neighbourhood> neighbourhoods = new HashMap<>();
 
         int neighbourhoodsLoaded = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(path.toFile()))) {
@@ -90,6 +91,8 @@ public abstract class Utils {
         } catch (IOException e) {
             logger.error("Error Opening CSV File");
         }
+
+        return neighbourhoods;
     }
 
 
@@ -109,40 +112,34 @@ public abstract class Utils {
 
         // Cargamos la lista de barrios para filtrar los árboles que se cargan
 
-        IMap<String, Neighbourhood> neighbourhoods = hz.getMap("g2_neighbourhoods");
-        loadNeighbourhoodsFromCsv(city, dir, neighbourhoods);
+        Map<String, Neighbourhood> neighbourhoods = loadNeighbourhoodsFromCsv(city, dir);
 
         // Recorremos el CSV y cargamos los arboles a una lista local
 
         List<Tree> trees = new ArrayList<>();
 
+        List<String> lines = Files.readAllLines(path);
+
         int treesLoaded = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(path.toFile()))) {
-            br.readLine();
+        for(String line : lines) {
+            String[] values = line.split("[;]");
 
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split("[;]");
-
-                Tree tree;
-                if(city.equals("BUE")) {
-                    tree = new Tree(values[7], values[2], values[4]);
-                } else {
-                    tree = new Tree(values[6], values[12], values[2]);
-                }
-
-                if(neighbourhoods.containsKey(tree.getNeighbour())){
-                    if(treePredicate == null || treePredicate.test(tree)) {
-                        trees.add(tree);
-                        treesLoaded++;
-                    }
-                }
+            Tree tree;
+            if(city.equals("BUE")) {
+                tree = new Tree(values[7], values[2], values[4]);
+            } else {
+                tree = new Tree(values[6], values[12], values[2]);
             }
 
-            logger.info("{} trees added", treesLoaded);
-        } catch (IOException e) {
-            logger.error("Error Opening CSV File");
+            if(neighbourhoods.containsKey(tree.getNeighbour())){
+                if(treePredicate == null || treePredicate.test(tree)) {
+                    trees.add(tree);
+                    treesLoaded++;
+                }
+            }
         }
+
+        logger.info("{} trees added", treesLoaded);
 
         // Limpiamos la lista distribuida por si alguien ejecutó otra query antes con otro predicado y cargamos
         // los elementos de la lista local todos juntos
