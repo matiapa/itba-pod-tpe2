@@ -1,16 +1,16 @@
 package pod.models;
 
 public class NeighborPairs implements Comparable<NeighborPairs>{
-    private final int group;
+    private final Long group;
     private final String neighborhoodA,neighborhoodB;
 
-    public NeighborPairs(int group, String neighborhoodA, String neighborhoodB) {
+    public NeighborPairs(Long group, String neighborhoodA, String neighborhoodB) {
         this.group = group;
         this.neighborhoodA = neighborhoodA;
         this.neighborhoodB = neighborhoodB;
     }
 
-    public int getGroup() {
+    public Long getGroup() {
         return group;
     }
 
@@ -25,7 +25,7 @@ public class NeighborPairs implements Comparable<NeighborPairs>{
     @Override
     public int compareTo(NeighborPairs o) {
         if (group-o.group!=0)
-            return group-o.group;
+            return (int)(group-o.group);
         else if (neighborhoodA.compareToIgnoreCase(o.neighborhoodA)!=0)
             return neighborhoodA.compareToIgnoreCase(o.neighborhoodA);
         else
