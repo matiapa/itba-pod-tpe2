@@ -1,4 +1,4 @@
-package pod.collators;
+package pod.models;
 
 public class Pair <K,V>{
     private K left;
