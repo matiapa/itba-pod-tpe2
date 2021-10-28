@@ -8,7 +8,7 @@ public class NeighborhoodSpeciesMapper implements Mapper<String, Tree, String,St
     // recibo row number, tree entity y devuelvo neighborhood, species
     @Override
     public void map(String string, Tree tree, Context<String, String> context) {
-        context.emit(tree.getNeighbour(),tree.getName());
+        context.emit(tree.getNeighbour(), tree.getName());
     }
 
 

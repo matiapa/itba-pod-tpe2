@@ -2,18 +2,20 @@ package pod.reducers;
 
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
+import pod.models.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 
-public class SpeciesMaxReducerFactory<K, T extends Comparable<T>> implements ReducerFactory<K, Map<T, Integer>, T> {
+public class SpeciesMaxReducerFactory<K, T extends Comparable<T>> implements ReducerFactory<K, Map<T, Integer>, Pair<T, Integer>> {
     @Override
-    public Reducer<Map<T, Integer>, T> newReducer(K key) {
+    public Reducer<Map<T, Integer>, Pair<T, Integer>> newReducer(K key) {
         return new SpeciesMaxReducer<>();
     }
 
-    private static class SpeciesMaxReducer<T extends Comparable<T>> extends Reducer<Map<T, Integer>, T> {
+    private static class SpeciesMaxReducer<T extends Comparable<T>> extends Reducer<Map<T, Integer>, Pair<T, Integer>> {
         private Map<T, Integer> hash;
 
         @Override
@@ -34,10 +36,11 @@ public class SpeciesMaxReducerFactory<K, T extends Comparable<T>> implements Red
         }
 
         @Override
-        public T finalizeReduce() {
-            return hash.entrySet().stream()
-                    .sorted(Map.Entry.<T, Integer>comparingByValue().reversed())
-                    .findFirst().get().getKey();
+        public Pair<T, Integer> finalizeReduce() {
+            Map.Entry<T, Integer> max = hash.entrySet().stream()
+                                            .sorted(Map.Entry.<T, Integer>comparingByValue().reversed())
+                                            .findFirst().get();
+            return new Pair<T, Integer>(max.getKey(), max.getValue());
         }
     }
 }

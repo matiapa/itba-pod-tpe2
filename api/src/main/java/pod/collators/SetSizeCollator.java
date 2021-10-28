@@ -14,6 +14,7 @@ public class SetSizeCollator implements Collator<Map.Entry<String, Set<String>>,
         for (Map.Entry<String,Set<String>> item : iterable){
             result.put(item.getKey(),item.getValue().size());
         }
+        
 
         return result;
 

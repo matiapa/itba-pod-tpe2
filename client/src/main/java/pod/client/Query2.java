@@ -3,6 +3,8 @@ package pod.client;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
+import com.hazelcast.core.IMap;
+import com.hazelcast.mapreduce.Collator;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -10,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.combiners.SpeciesCountCombinerFactory;
 import pod.mappers.NeighborhoodSpeciesMapper;
+import pod.models.Neighbourhood;
+import pod.models.Pair;
 import pod.models.Tree;
 import pod.reducers.SpeciesMaxReducerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -43,12 +48,25 @@ public class Query2 {
 
         JobTracker jt = hz.getJobTracker("g2_jobs");
         Job<String, Tree> job = jt.newJob(dataSource);
-        ICompletableFuture<Map<String, String>> future = job
+        ICompletableFuture<Map<String, Pair<String, Float>>> future = job
                 .mapper( new NeighborhoodSpeciesMapper() )
                 .combiner( new SpeciesCountCombinerFactory<>() )
                 .reducer( new SpeciesMaxReducerFactory<>() )
-                .submit();
-        Map<String, String> result = future.get();
+                .submit(new Collator<Map.Entry<String, Pair<String, Integer>>, Map<String, Pair<String, Float>>>(){
+                    @Override
+                    public Map<String, Pair<String, Float>> collate(Iterable<Map.Entry<String, Pair<String, Integer>>> iterable) {
+                        Map<String, Pair<String, Float>> hash = new HashMap<>();
+                        Float index;
+                        IMap<String, Neighbourhood> neighbourhoodIMap = hz.getMap("g2_neighbourhoods");
+                        for (Map.Entry<String,Pair<String, Integer>> item : iterable) {
+                            index = Float.valueOf(item.getValue().getRight()) / Float.valueOf(neighbourhoodIMap.get(item.getKey()).getPopulation());
+                            hash.put(item.getKey(), new Pair<String,Float>(item.getValue().getLeft(), (float)Math.floor(index * 100) / 100));
+                        }
+                        return hash;
+                    }
+                });
+                //.submit(new CalculateIndexCollator());
+        Map<String, Pair<String,Float>> result = future.get();
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
         logWriter.close();
@@ -59,13 +77,13 @@ public class Query2 {
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 
-        csvWriter.write("NEIGHBOURHOOD;COMMON_NAME\n");
+        csvWriter.write("NEIGHBOURHOOD;COMMON_NAME;TREES_PER_PEOPLE\n");
 
-        result.entrySet().stream().sorted(
+        result.entrySet().stream()/*.sorted(
                 Map.Entry.<String, String>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
-        ).forEach(e -> {
+        )*/.forEach(e -> {
             try {
-                csvWriter.write(e.getKey() + ";" + e.getValue() + "\n");
+                csvWriter.write(e.getKey() + ";" + e.getValue().getLeft() + ";" + e.getValue().getRight() + "\n");
             } catch (IOException err) {
                 err.printStackTrace();
             }
