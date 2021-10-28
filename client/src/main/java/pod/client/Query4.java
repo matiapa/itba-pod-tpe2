@@ -12,10 +12,12 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pod.collators.SetSizeCollator;
+import pod.collators.SetSortCollator;
 import pod.combiners.SetCombinerFactory;
 import pod.combiners.SortedSetCombinerFactory;
 import pod.mappers.NeighborhoodBySpeciesCountMapper;
 import pod.mappers.NeighborhoodSpeciesMapper;
+import pod.models.NeighborPairs;
 import pod.models.Tree;
 import pod.reducers.SetReducerFactory;
 import pod.reducers.SortedSetReducerFactory;
@@ -23,10 +25,8 @@ import pod.reducers.SortedSetReducerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 import static pod.client.Utils.parseParameter;
@@ -72,12 +72,12 @@ public class Query4 {
         KeyValueSource<String, Integer> dataSource2 = KeyValueSource.fromMap(treeSpeciesCountByNeighborhood);
 
         Job<String, Integer> job2 = jt.newJob(dataSource2);
-        ICompletableFuture<Map<Long, SortedSet<String>>> future2 = job2
+        ICompletableFuture<List<NeighborPairs>> future2 = job2
                 .mapper( new NeighborhoodBySpeciesCountMapper() )
                 .combiner( new SortedSetCombinerFactory<>() )
                 .reducer( new SortedSetReducerFactory<>() )
-                .submit();
-        Map<Long, SortedSet<String>> result2 = future2.get();
+                .submit(new SetSortCollator());
+        List<NeighborPairs> result2 = future2.get();
 
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
@@ -85,35 +85,27 @@ public class Query4 {
 
         // Write results
 
-        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query4.txt");
+        File csvFile = new File(parseParameter(args, "-DoutPath")+"/query4.csv");
         csvFile.createNewFile();
         FileWriter csvWriter = new FileWriter(csvFile);
 
         csvWriter.write("GROUP;NEIGHBOURHOOD A;NEIGHBOURHOOD B\n");
-        if (parseParameter(args, "-Dcity").equals("BUE")){
-            for (Long key:result2.keySet()) {
-                SortedSet<String> aux=new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
-                aux.addAll(result2.get(key));
-                result2.put(key,aux);
-            }
-        }
+//        if (parseParameter(args, "-Dcity").equals("BUE")){
+//            for (Long key:result2.keySet()) {
+//                SortedSet<String> aux=new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
+//                aux.addAll(result2.get(key));
+//                result2.put(key,aux);
+//            }
+//        }
 
-        result2.entrySet().stream().sorted(
-                Map.Entry.<Long, SortedSet<String>>comparingByKey().thenComparing(e -> e.getValue().first()).reversed()
-        ).forEach(e -> {
-            // Write each unique street pair combination
-            e.getValue().forEach(st1 -> {
-                e.getValue().forEach(st2 -> {
-                    if(st1.compareTo(st2) < 0) {
-                        try {
-                            csvWriter.write(e.getKey() + ";" + st1 + ";" + st2 + "\n");
-                        } catch (IOException err) {
-                            err.printStackTrace();
-                        }
-                    }
-                });
-            });
+        result2.forEach(neighborPairs ->{
+            try {
+                csvWriter.write(neighborPairs.getGroup() + ";" + neighborPairs.getNeighborhoodA() + ";" + neighborPairs.getNeighborhoodB() + "\n");
+            } catch (IOException err) {
+                err.printStackTrace();
+            }
         });
+
 
 
         csvWriter.close();
