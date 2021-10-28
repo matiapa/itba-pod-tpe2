@@ -17,9 +17,10 @@
   </modules>
 
   <properties>
+    <hazelcast.version>3.7.8</hazelcast.version>
+
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.7.12</slf4j.version>
-    <hazelcast.version>3.7.8</hazelcast.version>
   </properties>
 
   <dependencyManagement>
