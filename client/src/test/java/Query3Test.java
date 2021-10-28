@@ -15,6 +15,7 @@ import pod.models.Tree;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class Query3Test {
 
@@ -60,7 +61,7 @@ public class Query3Test {
         IList<Tree> testList = client.getList(listName);
 
 
-        SortedSet<Pair<String, Integer>> mapRedResult = Query3.getMapReduceResult(client, testList);
+        Stream<Pair<String, Integer>> mapRedResult = Query3.getMapReduceResult(client, testList,6);
 
         List<Pair<String, Integer>> expectedResult = Arrays.asList(
                 new Pair<>("LINIERS", 3),
@@ -79,7 +80,30 @@ public class Query3Test {
 
 
     }
+    @Test
+    public void testMapReduceResultWithLimit() throws ExecutionException, InterruptedException {
+        String listName = "trees";
+        IList<Tree> testListFromMember = member.getList(listName);
+        testListFromMember.addAll(treeList);
+        IList<Tree> testList = client.getList(listName);
 
+
+        Stream<Pair<String, Integer>> mapRedResult = Query3.getMapReduceResult(client, testList,2);
+
+        List<Pair<String, Integer>> expectedResult = Arrays.asList(
+                new Pair<>("LINIERS", 3),
+                new Pair<>("COLEGIALES", 2)
+        );
+
+        AtomicInteger i = new AtomicInteger();
+        mapRedResult.forEach(r -> {
+            Assert.assertEquals(expectedResult.get(i.get()).getLeft(), r.getLeft());
+            Assert.assertEquals(expectedResult.get(i.get()).getRight(), r.getRight());
+            i.getAndIncrement();
+        });
+
+
+    }
     @After
     public void closeHazelcast() {
         hazelcastFactory.shutdownAll();

@@ -19,11 +19,10 @@ import pod.reducers.SetReducerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
 
 import static pod.client.Utils.parseParameter;
 
@@ -36,9 +35,23 @@ public class Query3 {
 
         String outPath = parseParameter(args,"-DoutPath");
         String nParam = parseParameter(args,"-Dn");
+        int n=0;
+        try {
+             n =Integer.parseInt(nParam);
+
+            if (n < 0) {
+                logger.error("<n> param must be an integer greater than zero");
+                System.exit(1);
+            }
+
+
+        }catch (NumberFormatException e){
+            logger.error("<n> param must be an integer greater than zero");
+            System.exit(1);
+
+        }
 
         File logFile = new File(outPath+"/time3.txt");
-        System.out.println(logFile.createNewFile());
         FileWriter logWriter = new FileWriter(logFile);
 
 
@@ -53,19 +66,8 @@ public class Query3 {
         IList<Tree> trees = hazelcastInstance.getList("g2_trees");
 
 
-        SortedSet<Pair<String,Integer>> result = getMapReduceResult(hazelcastInstance,trees);
+        Stream<Pair<String,Integer>> result = getMapReduceResult(hazelcastInstance,trees,n);
 
-        AtomicInteger n = new AtomicInteger();
-        try {
-            n.set(Integer.parseInt(nParam));
-
-            if (n.get() < 0)
-                logger.error("<n> param must be an integer greater than zero");
-
-        }catch (NumberFormatException e){
-            logger.error("<n> param must be an integer greater than zero");
-
-        }
 
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
@@ -80,22 +82,15 @@ public class Query3 {
 
 
         result.forEach(r -> {
-            if(n.getAndDecrement() >0) {
+
                 try {
                     csvWriter.write(r.getLeft() + ";" + r.getRight() + "\n");
                 } catch (IOException err) {
-                    err.printStackTrace();
+                    logger.error(err.getMessage());
+                    HazelcastClient.shutdownAll();
                 }
-            }else {
-                try {
-                    csvWriter.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                HazelcastClient.shutdownAll();
-                System.exit(0);
-            }
-        });
+            });
+
         csvWriter.close();
 
         HazelcastClient.shutdownAll();
@@ -103,14 +98,9 @@ public class Query3 {
 
     }
 
-    public static Stream<Map.Entry<String, Integer>> getResultSorted(Map<String, Integer> result) {
 
-        return result.entrySet().stream().sorted(
-                Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()));
 
-    }
-
-    public static SortedSet<Pair<String, Integer>> getMapReduceResult(HazelcastInstance hazelcastInstance, IList<Tree> trees) throws ExecutionException, InterruptedException {
+    public static Stream<Pair<String, Integer>> getMapReduceResult(HazelcastInstance hazelcastInstance, IList<Tree> trees, int limit) throws ExecutionException, InterruptedException {
 
         final KeyValueSource<String,Tree> ds = KeyValueSource.fromList(trees);
 
@@ -119,13 +109,13 @@ public class Query3 {
         Job<String,Tree> job = jt.newJob(ds);
 
 
-        ICompletableFuture<SortedSet<Pair<String,Integer>>>  futureResult = job
+        ICompletableFuture<Stream<Pair<String,Integer>>>  futureResult = job
                 .mapper(new NeighborhoodSpeciesMapper())
                 .combiner(new SetCombinerFactory<>())
                 .reducer(new SetReducerFactory<>())
 
 
-                .submit(new SetSizeCollatorWithOrder());
+                .submit(new SetSizeCollatorWithOrder(limit));
 
 
         return futureResult.get();
