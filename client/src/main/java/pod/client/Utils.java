@@ -68,7 +68,7 @@ public abstract class Utils {
     }
 
 
-    private static Map<String, Neighbourhood> loadNeighbourhoodsFromCsv(String city, String dir) throws IOException {
+    private static Map<String, Neighbourhood> loadNeighbourhoodsFromCsv(String city, String dir, HazelcastInstance hz) throws IOException {
         Path path;
         if(city.equals("BUE"))
             path = Paths.get(dir + "/" + ARG_NEIGHBOURHOODS_FILE_NAME);
@@ -79,21 +79,26 @@ public abstract class Utils {
 
         Map<String, Neighbourhood> neighbourhoods = new HashMap<>();
 
+        // Recorremos el CSV y cargamos los barrios a un mapa local
+
+        List<String> lines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
         int neighbourhoodsLoaded = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(path.toFile()))) {
-            br.readLine();
 
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split("[;]");
-                neighbourhoods.put(values[0], new Neighbourhood(values[0], Integer.parseInt(values[1])));
-                neighbourhoodsLoaded++;
-            }
-
-            logger.info("{} neighbourhoods added", neighbourhoodsLoaded);
-        } catch (IOException e) {
-            logger.error("Error Opening CSV File");
+        for(int i=1; i<lines.size(); i++) {
+            String line = lines.get(i);
+            String[] values = line.split("[;]");
+            neighbourhoods.put(values[0], new Neighbourhood(values[0], Integer.parseInt(values[1])));
+            neighbourhoodsLoaded++;
         }
+
+        logger.info("{} neighbourhoods added", neighbourhoodsLoaded);
+
+        // Limpiamos el mapa distribuido por si alguien ejecutó otra query antes con otro archivo y cargamos
+        // los elementos del mapa distribuido todos juntos
+
+        IMap<String, Neighbourhood> neighbourhoodIMap = hz.getMap("g2_neighbourhoods");
+        neighbourhoodIMap.clear();
+        neighbourhoodIMap.putAll(neighbourhoods);
 
         return neighbourhoods;
     }
@@ -115,19 +120,13 @@ public abstract class Utils {
 
         // Cargamos la lista de barrios para filtrar los árboles que se cargan
 
-        Map<String, Neighbourhood> neighbourhoods = loadNeighbourhoodsFromCsv(city, dir);
+        Map<String, Neighbourhood> neighbourhoods = loadNeighbourhoodsFromCsv(city, dir, hz);
 
         // Recorremos el CSV y cargamos los arboles a una lista local
 
         List<Tree> trees = new ArrayList<>();
-        List<String> lines= null;
-        try {
+        List<String> lines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
 
-            lines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
-
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
         int treesLoaded = 0;
         for(String line : lines) {
             String[] values = line.split("[;]");
