@@ -68,6 +68,7 @@ public class Query5 {
         // Transform previous map to Map: Amount of trees -> SortedSet<Street>
 
         final IMap<String, Long> treeCountByStreet = hz.getMap("g2_treeCountByStreet");
+        treeCountByStreet.clear();
         result.forEach(treeCountByStreet::put);
 
         KeyValueSource<String, Long> dataSource2 = KeyValueSource.fromMap(treeCountByStreet);

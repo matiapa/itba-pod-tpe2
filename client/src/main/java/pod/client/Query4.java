@@ -51,7 +51,7 @@ public class Query4 {
         final KeyValueSource<String, Tree> dataSource = KeyValueSource.fromList(trees);
 
         Utils.logTimestamp(logWriter, "Inicio del trabajo map/reduce");
-        System.out.println("start map");
+
 
         JobTracker jt = hz.getJobTracker("g2_jobs");
         Job<String, Tree> job = jt.newJob(dataSource);
@@ -66,6 +66,7 @@ public class Query4 {
         // Transform previous map to Map: Amount of trees -> SortedSet<Street>
 
         final IMap<String, Integer> treeSpeciesCountByNeighborhood = hz.getMap("g2_treeSpeciesCountByNeighborhood");
+        treeSpeciesCountByNeighborhood.clear();
         treeSpeciesCountByNeighborhood.putAll(result);
 
         KeyValueSource<String, Integer> dataSource2 = KeyValueSource.fromMap(treeSpeciesCountByNeighborhood);
@@ -117,20 +118,6 @@ public class Query4 {
 
         csvWriter.close();
         HazelcastClient.shutdownAll();
-
-
-
-
-
-//        result.stream().sorted().forEach(e -> {
-//            try {
-//                csvWriter.write(e.getGroup() + ";" + e.getNeighborhoodA()  + ";" + e.getNeighborhoodB() + "\n");
-//            } catch (IOException err) {
-//                err.printStackTrace();
-//            }
-//        });
-//        csvWriter.close();
-        System.out.println("finished");
     }
 
 }

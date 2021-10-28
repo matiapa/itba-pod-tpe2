@@ -13,6 +13,8 @@ import pod.models.Neighbourhood;
 import pod.models.Tree;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +43,8 @@ public abstract class Utils {
 
     public static String parseParameter(String[] args, String paramToFind){
         return Stream.of(args).filter(arg -> arg.contains(paramToFind))
-            .map(arg -> arg.substring(arg.indexOf("=")+ 1))
+            .map(arg ->
+                    arg.substring(arg.indexOf("=")+ 1))
             .findFirst().orElseThrow(() -> new IllegalArgumentException(
                     "Must provide " + paramToFind + "=<value> param")
             );
@@ -117,9 +120,14 @@ public abstract class Utils {
         // Recorremos el CSV y cargamos los arboles a una lista local
 
         List<Tree> trees = new ArrayList<>();
+        List<String> lines= null;
+        try {
 
-        List<String> lines = Files.readAllLines(path);
+            lines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
 
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
         int treesLoaded = 0;
         for(String line : lines) {
             String[] values = line.split("[;]");
