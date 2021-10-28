@@ -69,10 +69,6 @@ public class Query3 {
         Stream<Pair<String,Integer>> result = getMapReduceResult(hazelcastInstance,trees,n);
 
 
-
-        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
-
-        logWriter.close();
         // Write results
 
         File csvFile = new File(outPath+"/query3.csv");
@@ -91,6 +87,12 @@ public class Query3 {
                 }
             });
 
+
+
+
+        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+
+        logWriter.close();
         csvWriter.close();
 
         HazelcastClient.shutdownAll();

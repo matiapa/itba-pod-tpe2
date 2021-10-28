@@ -57,8 +57,7 @@ public class Query2 {
                 .submit(new CalculateIndexCollator(hz));
         Map<String, Pair<String,Float>> result = future.get();
 
-        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
-        logWriter.close();
+
 
         // Write results
 
@@ -79,6 +78,8 @@ public class Query2 {
 
             }
         });
+        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+        logWriter.close();
         csvWriter.close();
         HazelcastClient.shutdownAll();
     }

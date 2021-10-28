@@ -52,8 +52,7 @@ public class Query1 {
             .submit();
         Map<String, Long> result = future.get();
 
-        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
-        logWriter.close();
+
 
         // Write results
 
@@ -73,6 +72,8 @@ public class Query1 {
                 HazelcastClient.shutdownAll();
             }
         });
+        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+        logWriter.close();
         csvWriter.close();
         HazelcastClient.shutdownAll();
 

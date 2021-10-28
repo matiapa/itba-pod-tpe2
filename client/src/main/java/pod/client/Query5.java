@@ -86,9 +86,6 @@ public class Query5 {
         SortedSet<StreetPair> result2 = future2.get();
 
 
-        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
-        logWriter.close();
-
         // Write results
 
         File csvFile = new File(parseParameter(args, "-DoutPath")+"/query5.csv");
@@ -107,6 +104,11 @@ public class Query5 {
             }
         });
 
+
+
+
+        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+        logWriter.close();
         csvWriter.close();
         HazelcastClient.shutdownAll();
 

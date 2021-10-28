@@ -59,9 +59,6 @@ public class Query4 {
         List <NeighborPairs> result = getMapReduceResult(hz,trees);
 
 
-        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
-        logWriter.close();
-
         // Write results
 
         File csvFile = new File(parseParameter(args, "-DoutPath") + "/query4.csv");
@@ -88,7 +85,12 @@ public class Query4 {
         });
 
 
+
+        Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+        logWriter.close();
+
         csvWriter.close();
+
         HazelcastClient.shutdownAll();
     }
 
