@@ -10,6 +10,7 @@ import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pod.collators.CalculateIndexCollator;
 import pod.combiners.SpeciesCountCombinerFactory;
 import pod.mappers.NeighborhoodSpeciesMapper;
 import pod.models.Neighbourhood;
@@ -52,20 +53,7 @@ public class Query2 {
                 .mapper( new NeighborhoodSpeciesMapper() )
                 .combiner( new SpeciesCountCombinerFactory<>() )
                 .reducer( new SpeciesMaxReducerFactory<>() )
-                .submit(new Collator<Map.Entry<String, Pair<String, Integer>>, Map<String, Pair<String, Float>>>(){
-                    @Override
-                    public Map<String, Pair<String, Float>> collate(Iterable<Map.Entry<String, Pair<String, Integer>>> iterable) {
-                        Map<String, Pair<String, Float>> hash = new HashMap<>();
-                        Float index;
-                        IMap<String, Neighbourhood> neighbourhoodIMap = hz.getMap("g2_neighbourhoods");
-                        for (Map.Entry<String,Pair<String, Integer>> item : iterable) {
-                            index = Float.valueOf(item.getValue().getRight()) / Float.valueOf(neighbourhoodIMap.get(item.getKey()).getPopulation());
-                            hash.put(item.getKey(), new Pair<String,Float>(item.getValue().getLeft(), (float)Math.floor(index * 100) / 100));
-                        }
-                        return hash;
-                    }
-                });
-                //.submit(new CalculateIndexCollator());
+                .submit(new CalculateIndexCollator(hz));
         Map<String, Pair<String,Float>> result = future.get();
 
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
