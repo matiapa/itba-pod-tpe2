@@ -1,8 +1,9 @@
 package pod.models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Pair <K extends Comparable<K>,V extends Comparable<V>> implements Comparable<Pair<K,V>>{
+public class Pair <K extends Comparable<K>,V extends Comparable<V>> implements Comparable<Pair<K,V>>, Serializable {
     private K left;
     private V right;
 
