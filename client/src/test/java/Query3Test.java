@@ -57,6 +57,8 @@ public class Query3Test {
         IList<Tree> testListFromMember = member.getList(listName);
         testListFromMember.addAll(treeList);
         IList<Tree> testList = client.getList(listName);
+    }
+        /*
         Map<String,Integer> mapRedResult = Query3.getMapReduceResult(client,testList);
 
 
@@ -87,11 +89,7 @@ public class Query3Test {
         });
     }
 
-
-
-
-
-
+         */
 
     @After
     public void closeHazelcast() {
