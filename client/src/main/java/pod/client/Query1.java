@@ -19,6 +19,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import java.util.List;
 
 import static pod.client.Utils.parseParameter;
 
@@ -45,14 +49,15 @@ public class Query1 {
 
         JobTracker jt = hz.getJobTracker("g2_jobs");
         Job<String, Tree> job = jt.newJob(dataSource);
-        ICompletableFuture<Map<String, Long>> future = job
+        ICompletableFuture<Stream<Map.Entry<String, Long>>> future = job
             .mapper( new TreeByNeighMapper() )
             .combiner( new CountCombinerFactory<>() )
             .reducer( new CountReducerFactory<>() )
-            .submit();
-        Map<String, Long> result = future.get();
-
-
+            .submit((values) ->
+                StreamSupport.stream(values.spliterator(), false)
+                .sorted(Map.Entry.<String, Long>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed())
+            );
+        Stream<Map.Entry<String, Long>> result = future.get();
 
         // Write results
 
@@ -62,9 +67,7 @@ public class Query1 {
 
         csvWriter.write("NEIGHBOURHOOD;TREES\n");
 
-        result.entrySet().stream().sorted(
-            Map.Entry.<String, Long>comparingByValue().thenComparing(Map.Entry.comparingByKey()).reversed()
-        ).forEach(e -> {
+        result.forEach(e -> {
             try {
                 csvWriter.write(e.getKey() + ";" + e.getValue() + "\n");
             } catch (IOException err) {
@@ -72,7 +75,9 @@ public class Query1 {
                 HazelcastClient.shutdownAll();
             }
         });
+
         Utils.logTimestamp(logWriter, "Fin del trabajo map/reduce");
+
         logWriter.close();
         csvWriter.close();
         HazelcastClient.shutdownAll();
